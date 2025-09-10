@@ -61,9 +61,9 @@ let activeCategory = 'call';
 export function initializeOptionSelector() {
     initializeCategoryTabs();
     addObserver(renderOptionButtons);
-    // 初期表示のために一度呼び出す
-    const firstTab = document.querySelector('.option-category-button');
-    if(firstTab) firstTab.click();
+    // 初期表示のために「通話」タブを名指しでクリックする
+    const callTab = document.querySelector('.option-category-button[data-category="call"]');
+    if(callTab) callTab.click();
 }
 
 function initializeCategoryTabs() {

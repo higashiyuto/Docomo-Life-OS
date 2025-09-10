@@ -2,7 +2,6 @@ import { store, addObserver } from '../../state/store.js';
 
 const planDiscountsData = {
     'family-discount': {
-        // ▼▼▼ 修正点: typeを'checkbox-select'に変更 ▼▼▼
         type: 'checkbox-select', 
         label: 'ファミリー割引',
         optionKey: 'family',
