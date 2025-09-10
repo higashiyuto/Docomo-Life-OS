@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docomo 見積もりアプリ</title>
+    <style>
+        /* --- 基本設定 --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f0f2f5;
+            padding: 5px;
+        }
+        .app-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        /* --- ヘッダー --- */
+        .selection-header {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .select-container { flex-grow: 1; }
+        .device-select-wrapper { flex-basis: 40%; min-width: 250px; }
+        .contract-select-wrapper { flex-basis: 25%; min-width: 150px; }
+        .price-display {
+            flex-basis: 20%;
+            min-width: 120px;
+            font-size: 1.0em;
+            font-weight: bold;
+            text-align: right;
+            padding-right: 16px;
+            color: #333;
+        }
+        select {
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background-color: #fff;
+        }
+        button, input[type="checkbox"] {
+            cursor: pointer;
+        }
+        button:focus, select:focus, input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.5);
+        }
+        /* --- メインコンテンツ --- */
+        .main-content { padding: 5px; display: flex; flex-direction: column; gap: 8px;}
+        
+        .discount-toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 16px;
+            background-color: #e9f5ff;
+            border: 1px solid #b3d7ff;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 12px;
+            width: fit-content;
+            align-self: flex-start;
+            margin-bottom: -15px;
+            position: relative;
+            z-index: 1;
+        }
+        .discount-toggle-container label { cursor: pointer; }
+        .installments-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 8px;
+            padding-top: 28px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        
+        .installments-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .installments-item .name {
+            width: 130px;
+            font-weight: bold;
+            color: #555;
+            flex-shrink: 0;
+        }
+        .installments-item select { width: 90px; }
+        .installments-item .placeholder { width: 90px; height: 1px; }
+        .installments-item .price {
+            width: 100px;
+            text-align: right;
+            font-weight: 500;
+        }
+        .installments-item .monthly-price {
+            flex-grow: 1;
+            text-align: right;
+            font-weight: bold;
+            color: #333;
+        }
+        .installments-item input[type="checkbox"] {
+            margin-left: 16px;
+            width: 20px;
+            height: 20px;
+        }
+
+        /* --- プラン & オプションコンテナ共通スタイル --- */
+        .plan-container, .option-container, .plan-discount-container {
+            padding: 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .plan-buttons, .plan-storage, .option-category-buttons, .option-list-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .plan-storage, .option-list-wrapper {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #eee;
+        }
+        .plan-button, .storage-button, .option-category-button, .option-button {
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 15px;
+            background-color: #f0f0f0;
+            font-size: 12px;
+            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+        }
+        .plan-button.active, .storage-button.active, .option-category-button.active, .option-button.active {
+            background-color: #d1003d; /* ドコモレッド */
+            color: white;
+            border-color: #d1003d;
+            font-weight: bold;
+        }
+
+        /* --- ▼▼▼ ここから修正 ▼▼▼ --- */
+        .plan-discount-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+        .plan-discount-item {
+            display: flex;
+            align-items: center;
+            padding: 4px 0; /* 項目の上下の余白を詰める */
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .plan-discount-item:last-child {
+            border-bottom: none;
+        }
+        .plan-discount-item label, .plan-discount-item select {
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .plan-discount-item select {
+            border: none;
+            background-color: #fff;
+            padding: 4px 8px 4px 0;
+            height: 28px;
+            width: auto;
+            /* selectのデフォルト矢印を消す場合 */
+            /* -webkit-appearance: none; appearance: none; */
+        }
+        .plan-discount-item .price {
+            font-weight: bold;
+            color: #0071e3;
+            font-size: 16px;
+            margin-left: auto; /* ★価格を右端に寄せる */
+        }
+        /* --- ▲▲▲ ここまで修正 ▲▲▲ --- */
+
+        .option-category-button {
+            background-color: #e9ecef;
+            border-color: #ced4da;
+        }
+        .option-category-button.active {
+            background-color: #343a40;
+            color: white;
+            border-color: #343a40;
+        }
+        .option-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex-basis: 48%;
+            min-width: 200px;
+        }
+        .option-group label {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 4px;
+            color: #555;
+        }
+        .option-group select {
+            height: 33px;
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        /* --- フッター (合計金額) --- */
+        .total-footer {
+            padding: 10px 24px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+        }
+        .total-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .total-label {
+            font-size: 18px;
+            font-weight: 500;
+            color: #444;
+        }
+        .total-price {
+            font-size: 16px;
+            font-weight: bold;
+            color: #d1003d;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-wrapper">
+        
+        <header class="selection-header">
+            <div class="select-container device-select-wrapper">
+                <select id="device-select">
+                    <option value="" disabled selected>端末を選択してください</option>
+                </select>
+            </div>
+            <div id="device-price-display" class="price-display">0 円</div>
+            <div class="select-container contract-select-wrapper">
+                <select id="contract-select">
+                    <option value="" disabled selected>契約種別</option>
+                    <option value="機種変更">機種変更</option>
+                    <option value="MNP">MNP</option>
+                    <option value="新規">新規</option>
+                </select>
+            </div>
+        </header>
+
+        <main id="app-container" class="main-content">
+            <div class="discount-toggle-container">
+                <label for="device-discount-checkbox">端末割引を適用する</label>
+                <input type="checkbox" id="device-discount-checkbox">
+            </div>
+
+            <div class="installments-wrapper">
+                <div class="installments-item">
+                    <span class="name">通常分割</span>
+                    <select id="installments-select">
+                        <option value="1" selected>一括</option>
+                        <option value="12">12回</option>
+                        <option value="24">24回</option>
+                        <option value="36">36回</option>
+                    </select>
+                    <span class="price" id="normal-price">0 円</span>
+                    <span class="monthly-price" id="normal-monthly-price">0 円 / 月</span>
+                    <input type="checkbox" id="normal-checkbox">
+                </div>
+                <div class="installments-item">
+                    <span class="name">カエドキ</span>
+                    <div class="placeholder"></div>
+                    <span class="price" id="kaedoki-price">0 円</span>
+                    <span class="monthly-price" id="kaedoki-monthly-price">0 円 / 月</span>
+                    <input type="checkbox" id="kaedoki-checkbox">
+                </div>
+            </div>
+
+            <div class="plan-container">
+                <div class="plan-buttons">
+                    <button class="plan-button max">ドコモMAX</button>
+                    <button class="plan-button mini">ドコモmini</button>
+                    <button class="plan-button ahamo">ahamo</button>
+                </div>
+                <div class="plan-storage"></div>
+            </div>
+            
+            <div class="option-container">
+                <div class="option-category-buttons">
+                    <button class="option-category-button call" data-category="call">通話</button>
+                    <button class="option-category-button mail" data-category="mail">メール</button>
+                    <button class="option-category-button warranty" data-category="warranty">補償</button>
+                    <button class="option-category-button security" data-category="security">セキュリティ</button>
+                </div>
+                <div class="option-list-wrapper"></div>
+            </div>
+
+            <div class="plan-discount-container">
+            </div>
+
+        </main>
+
+        <footer id="total-container" class="total-footer">
+            <div class="total-content">
+                <span class="total-label">合計月額</span>
+                <span class="total-price" id="total-price-value">0 円</span>
+            </div>
+        </footer>
+
+    </div>
+
+    <script type="module" src="src/index.js"></script>
+</body>
+</html>
